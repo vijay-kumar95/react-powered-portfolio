@@ -21,19 +21,26 @@
     text-align: left;
     z-index: 2;
 
-    .social_icons {
+    // .social_icons {
+    //     display: none;
+    //     flex-direction: row;
+    //     gap: 10px;
+    //     color: white;
+
+    //     svg {
+    //         font-size: 1.8em;
+    //     }
+    // }
+
+    .mobile_social_icons {
         display: flex;
         flex-direction: row;
-        gap: 10px;
+        gap: 12px;
         color: white;
 
         svg {
             font-size: 1.8em;
         }
-    }
-
-    .mobile_social_icons {
-        display: none;
     }
 
     p {
@@ -43,7 +50,7 @@
     }
 
     h1 {
-        font-size: 5em;
+        font-size: 4em;
         margin-block-start: 0px;
         margin-block-end: 0px;
     }
