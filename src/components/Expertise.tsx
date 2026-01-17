@@ -16,29 +16,46 @@ const labelsFirst = [
     "Python",
     "SQL",
     "PostgreSQL",
-    "Postman"
+    "Postman",
+    "Node.js",
+    "Express.js",
+    "JWT Authentication",
+    "Mongoose", 
+    "RESTful APIs"
 ];
 
 const labelsSecond = [
-    "Git",
-    "GitHub Actions",
-    "Docker",
-    "AWS",
-    "Azure",
-    "Linux",
-    "Snowflake",
-    "Pandas",
-    "Selenium",
+      "Git",
+      "GitHub Actions",
+      "Jenkins",
+      "Docker",
+    "Kubernetes",
+     "Helm",
+     "AWS",
+  "Terraform",
+  "Ansible",
+  "Chef",
+  "Puppet",
+  "Linux",
+  "Prometheus",
+  "Grafana",
+  "ELK Stack",
+  "CloudWatch",
+  "Snowflake",
 ];
 
-const labelsThird = [
-    "OpenAI",
-    "Groq",
-    "LangChain",
-    "Qdrant",
-    "Hugging Face",
-    "LlamaIndex",
-    "Streamlit",
+const labelsThird = 
+[
+  "OpenAI API",
+  "LangChain",
+  "Hugging Face Transformers",
+  "LlamaIndex",
+  "Qdrant",
+  "Harness AI",
+  "DeepCode / Snyk AI",
+  "BigPanda",
+  "Moogsoft",
+  "AWS DevOps Guru"
 ];
 
 function Expertise() {
@@ -49,8 +66,8 @@ function Expertise() {
             <div className="skills-grid">
                 <div className="skill">
                     <FontAwesomeIcon icon={faReact} size="3x"/>
-                    <h3>Full Stack Web Development</h3>
-                    <p>I have built a diverse array of web applications from scratch using modern technologies such as React and Flask. I have a strong proficiency in the SDLC process and frontend + backend development.</p>
+                    <h3>Application Development & Maintenance</h3>
+                    <p>I build and maintain MERN stack applications from end to end, focusing on creating solutions that are stable, scalable, and reliable. With hands-on experience in both development and maintenance, I ensure applications perform optimally, are easy to extend, and integrate seamlessly with DevOps pipelines for smooth deployment and monitoring.</p>
                     <div className="flex-chips">
                         <span className="chip-title">Tech stack:</span>
                         {labelsFirst.map((label, index) => (
@@ -62,9 +79,8 @@ function Expertise() {
                 <div className="skill">
                     <FontAwesomeIcon icon={faDocker} size="3x"/>
                     <h3>DevOps & Automation</h3>
-                    <p>Once the application is built, I help clients set up DevOps testing, CI/CD pipelines, and deployment automation to support the successful Go-Live.</p>
+                    <p>Specializing in DevOps automation, I streamline the full lifecycle of software delivery by designing and maintaining automated testing, CI/CD pipelines, and deployment workflows. My work ensures stable, scalable, and reliable production releases, reduces human error, supports long-term maintenance, and incorporates intelligent tools to improve observability and operational insights.</p>
                     <div className="flex-chips">
-                        <span className="chip-title">Tech stack:</span>
                         {labelsSecond.map((label, index) => (
                             <Chip key={index} className='chip' label={label} />
                         ))}
@@ -74,7 +90,7 @@ function Expertise() {
                 <div className="skill">
                     <FontAwesomeIcon icon={faPython} size="3x"/>
                     <h3>GenAI & LLM</h3>
-                    <p>Stay relevant in the market by leveraging the latest AI models in your projects. I have professional experience building enterprise grade GenAI-enabled solutions to empower intelligent decision making.</p>
+                    <p>Leveraging AI and LLMs, I optimize DevOps operations by automating CI/CD pipelines, deployment workflows, and testing frameworks, while integrating advanced monitoring and observability tools. This enables proactive anomaly detection, predictive maintenance, and intelligent decision-making, resulting in highly reliable, scalable, and efficient production environments.</p>
                     <div className="flex-chips">
                         <span className="chip-title">Tech stack:</span>
                         {labelsThird.map((label, index) => (
