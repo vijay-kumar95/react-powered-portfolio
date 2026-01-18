@@ -27,15 +27,16 @@ function Contact() {
 
     /* Uncomment below if you want to enable the emailJS */
 
-    // if (name !== '' && email !== '' && message !== '') {
+    // if (name.trim() !== '' && email.trim() !== '' && message.trim() !== '') {
     //   var templateParams = {
-    //     name: name,
-    //     email: email,
-    //     message: message
+    //     name: name.trim(),
+    //     email: email.trim(),
+    //     message: message.trim(),  
     //   };
 
     //   console.log(templateParams);
-    //   emailjs.send('service_id', 'template_id', templateParams, 'api_key').then(
+    //   emailjs
+    //     .send('process.env.EMAILJS_SERVICE_ID', 'process.env.EMAILJS_TEMPLATE_ID', templateParams, 'process.env.EMAILJS_API_KEY').then(
     //     (response) => {
     //       console.log('SUCCESS!', response.status, response.text);
     //     },
