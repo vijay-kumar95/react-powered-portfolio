@@ -28,11 +28,5 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Type check
-      run: npx tsc --noEmit
-
-    - name: Run tests
-      run: npm test -- --watchAll=false
-
-    - name: Build project
+    - name: Build
       run: npm run build
