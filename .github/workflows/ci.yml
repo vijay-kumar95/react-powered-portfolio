@@ -59,14 +59,14 @@ jobs:
         source: "build/*"
         target: "/home/rocky/build/"
 
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          sudo rm -rf /var/www/myportfolio/*
-          sudo cp -r /home/rocky/build/* /var/www/myportfolio/
-          sudo systemctl reload nginx
-          echo "Deployment successful!"
+    # - name: Deploy via SSH
+    #   uses: appleboy/ssh-action@v1.0.3
+    #   with:
+    #     host: ${{ secrets.EC2_HOST }}
+    #     username: ${{ secrets.EC2_USER }}
+    #     key: ${{ secrets.EC2_SSH_KEY }}
+    #     script: |
+    #       sudo rm -rf /var/www/myportfolio/*
+    #       sudo cp -r /home/rocky/build/* /var/www/myportfolio/
+    #       sudo systemctl reload nginx
+    #       echo "Deployment successful!"
