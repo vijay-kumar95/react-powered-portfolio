@@ -34,6 +34,10 @@ jobs:
       with:
         name: build-files
         path: build/
+        script: |
+          echo "Build successful! Artifacts uploaded for CD."
+          ls -la build/  # List files to verify upload  
+        
 
   # ========================
   # CD JOB
@@ -49,6 +53,9 @@ jobs:
       with:
         name: build-files
         path: build/
+        script: |
+          echo "Build artifacts downloaded for deployment."
+          ls -la build/  # List files to verify download
 
     - name: Copy files to EC2
       uses: appleboy/scp-action@v0.1.7
@@ -57,16 +64,16 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         source: "build/*"
-        target: "/home/rocky/build/"
+        target: "/home/rocky/"
 
-    # - name: Deploy via SSH
-    #   uses: appleboy/ssh-action@v1.0.3
-    #   with:
-    #     host: ${{ secrets.EC2_HOST }}
-    #     username: ${{ secrets.EC2_USER }}
-    #     key: ${{ secrets.EC2_SSH_KEY }}
-    #     script: |
-    #       sudo rm -rf /var/www/myportfolio/*
-    #       sudo cp -r /home/rocky/build/* /var/www/myportfolio/
-    #       sudo systemctl reload nginx
-    #       echo "Deployment successful!"
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          sudo rm -rf /var/www/myportfolio/*
+          sudo cp -r /home/rocky/build/* /var/www/myportfolio/
+          sudo systemctl reload nginx
+          echo "Deployment successful!"
