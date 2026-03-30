@@ -77,3 +77,4 @@ jobs:
           sudo cp -r /home/rocky/build/* /var/www/myportfolio/
           sudo systemctl reload nginx
           echo "Deployment successful!"
+          ls -la /var/www/myportfolio/  # List files to verify deployment
