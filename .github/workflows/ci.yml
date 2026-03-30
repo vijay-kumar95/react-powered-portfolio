@@ -1,34 +1,72 @@
-name: React TS CI
+name: CI-CD Pipeline
 
 on:
   push:
-    branches: [ "custom", "feature/*" ]
-  pull_request:
-    branches: [ "custom", "feature/*" ]
+    branches: [ "custom" ]
 
 jobs:
-  ci:
 
+  # ========================
+  # CI JOB
+  # ========================
+  ci:
     runs-on: ubuntu-22.04
 
     steps:
-
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: 22.17.0
+        node-version: 22
         cache: 'npm'
-
-    - name: Verify Node version
-      run: node -v
 
     - name: Install dependencies
       run: npm ci
 
     - name: Build
       run: npm run build
-      # env:
-      #   CI: false
+
+    # 👉 Upload build as artifact (important for CD)
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-files
+        path: build/
+
+  # ========================
+  # CD JOB
+  # ========================
+  cd:
+    needs: ci   # 👈 runs only if CI succeeds
+    runs-on: ubuntu-22.04
+
+    steps:
+
+    - name: Download build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: build-files
+        path: build/
+
+    - name: Copy files to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "build/*"
+        target: "/home/rocky/build/"
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          sudo rm -rf /var/www/myportfolio/*
+          sudo cp -r /home/rocky/build/* /var/www/myportfolio/
+          sudo systemctl reload nginx
+          echo "Deployment successful!"
