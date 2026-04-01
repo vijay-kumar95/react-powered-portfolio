@@ -1,3 +1,86 @@
+# name: CI-CD Pipeline
+
+# on:
+#   push:
+#     branches: [ "custom" ]
+
+# jobs:
+
+#   # ========================
+#   # CI JOB
+#   # ========================
+#   ci:
+#     runs-on: ubuntu-22.04
+
+#     steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v4
+
+#     - name: Setup Node.js
+#       uses: actions/setup-node@v4
+#       with:
+#         node-version: 22
+#         cache: 'npm'
+
+#     - name: Install dependencies
+#       run: npm ci
+
+#     - name: Build
+#       run: npm run build
+
+#     # 👉 Upload build as artifact (important for CD)
+#     - name: Upload build artifact
+#       uses: actions/upload-artifact@v4
+#       with:
+#         name: build-files
+#         path: build/
+#         script: |
+#           echo "Build successful! Artifacts uploaded for CD."
+#           ls -la build/  # List files to verify upload  
+        
+
+#   # ========================
+#   # CD JOB
+#   # ========================
+#   cd:
+#     needs: ci   # 👈 runs only if CI succeeds
+#     runs-on: ubuntu-22.04
+
+#     steps:
+
+#     - name: Download build artifact
+#       uses: actions/download-artifact@v4
+#       with:
+#         name: build-files
+#         path: build/
+#         script: |
+#           echo "Build artifacts downloaded for deployment."
+#           ls -la build/  # List files to verify download
+
+#     - name: Copy files to EC2
+#       uses: appleboy/scp-action@v0.1.7
+#       with:
+#         host: ${{ secrets.EC2_HOST }}
+#         username: ${{ secrets.EC2_USER }}
+#         key: ${{ secrets.EC2_SSH_KEY }}
+#         source: "build/*"
+#         target: "/home/rocky/"
+
+#     - name: Deploy via SSH
+#       uses: appleboy/ssh-action@v1.0.3
+#       with:
+#         host: ${{ secrets.EC2_HOST }}
+#         username: ${{ secrets.EC2_USER }}
+#         key: ${{ secrets.EC2_SSH_KEY }}
+#         script: |
+#           sudo rm -rf /var/www/myportfolio/*
+#           sudo cp -r /home/rocky/build/* /var/www/myportfolio/
+#           sudo systemctl reload nginx
+#           echo "Deployment successful!"
+#           ls -la /var/www/myportfolio/  # List files to verify deployment
+
+# ========================
+
 name: CI-CD Pipeline
 
 on:
@@ -28,22 +111,17 @@ jobs:
     - name: Build
       run: npm run build
 
-    # 👉 Upload build as artifact (important for CD)
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:
         name: build-files
         path: build/
-        script: |
-          echo "Build successful! Artifacts uploaded for CD."
-          ls -la build/  # List files to verify upload  
-        
 
   # ========================
-  # CD JOB
+  # CD JOB (SSM BASED)
   # ========================
   cd:
-    needs: ci   # 👈 runs only if CI succeeds
+    needs: ci
     runs-on: ubuntu-22.04
 
     steps:
@@ -51,30 +129,33 @@ jobs:
     - name: Download build artifact
       uses: actions/download-artifact@v4
       with:
-        name: build-files
-        path: build/
-        script: |
-          echo "Build artifacts downloaded for deployment."
-          ls -la build/  # List files to verify download
+       name: build-files
+       path: build/
 
-    - name: Copy files to EC2
-      uses: appleboy/scp-action@v0.1.7
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
       with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: "build/*"
-        target: "/home/rocky/"
+       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+       aws-region: ap-south-1
 
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          sudo rm -rf /var/www/myportfolio/*
-          sudo cp -r /home/rocky/build/* /var/www/myportfolio/
-          sudo systemctl reload nginx
-          echo "Deployment successful!"
-          ls -la /var/www/myportfolio/  # List files to verify deployment
+    - name: Upload build to S3
+      run: |
+           aws s3 sync build/ s3://my-portfolio-builds/
+
+    - name: Deploy via SSM
+      run: |
+       COMMAND_ID=$(aws ssm send-command \
+        --instance-ids "${{ secrets.INSTANCE_ID }}" \
+        --document-name "AWS-RunShellScript" \
+        --parameters 'commands=[
+          "echo Downloading latest build...",
+          "sudo rm -rf /var/www/myportfolio/*",
+          "aws s3 sync s3://my-portfolio-builds/ /var/www/myportfolio/",
+          "sudo systemctl reload nginx",
+          "echo Deployment successful!"
+        ]' \
+        --query "Command.CommandId" \
+        --output text)
+
+       echo "Command ID: $COMMAND_ID"
