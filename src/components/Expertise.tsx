@@ -66,7 +66,7 @@ function Expertise() {
             <div className="skills-grid">
                 <div className="skill">
                     <FontAwesomeIcon icon={faReact} size="3x"/>
-                    <h3>Application Development & Maintenance</h3>
+                    <h3>Application Development & Maintenance??? more like devops</h3>
                     <p>I build and maintain MERN stack applications from end to end, focusing on creating solutions that are stable, scalable, and reliable. With hands-on experience in both development and maintenance, I ensure applications perform optimally, are easy to extend, and integrate seamlessly with DevOps pipelines for smooth deployment and monitoring.</p>
                     <div className="flex-chips">
                         <span className="chip-title">Tech stack:</span>
