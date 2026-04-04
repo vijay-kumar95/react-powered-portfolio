@@ -102,6 +102,8 @@ jobs:
 
           "echo Running new container...",
           "docker run -d -p 7070:80 --name portfolio ${{ secrets.ECR_REGISTRY }}/portfolio-app:latest",
+          "docker ps -a",
+          "docker logs portfolio",
 
           "echo Deployment successful!"
         ]' \
