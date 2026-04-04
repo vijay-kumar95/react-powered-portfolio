@@ -96,7 +96,7 @@ jobs:
 
           "docker pull ${{ secrets.ECR_REGISTRY }}/portfolio-app:latest",
 
-          "echo Stopping old container (if exists)...",
+          "echo Stopping old container if exists...",
           "docker stop portfolio || true",
           "docker rm portfolio || true",
 
