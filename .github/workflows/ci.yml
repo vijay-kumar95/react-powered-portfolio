@@ -1,87 +1,4 @@
-# name: CI-CD Pipeline
-
-# on:
-#   push:
-#     branches: [ "custom" ]
-
-# jobs:
-
-#   # ========================
-#   # CI JOB
-#   # ========================
-#   ci:
-#     runs-on: ubuntu-22.04
-
-#     steps:
-#     - name: Checkout code
-#       uses: actions/checkout@v4
-
-#     - name: Setup Node.js
-#       uses: actions/setup-node@v4
-#       with:
-#         node-version: 22
-#         cache: 'npm'
-
-#     - name: Install dependencies
-#       run: npm ci
-
-#     - name: Build
-#       run: npm run build
-
-#     # 👉 Upload build as artifact (important for CD)
-#     - name: Upload build artifact
-#       uses: actions/upload-artifact@v4
-#       with:
-#         name: build-files
-#         path: build/
-#         script: |
-#           echo "Build successful! Artifacts uploaded for CD."
-#           ls -la build/  # List files to verify upload  
-        
-
-#   # ========================
-#   # CD JOB
-#   # ========================
-#   cd:
-#     needs: ci   # 👈 runs only if CI succeeds
-#     runs-on: ubuntu-22.04
-
-#     steps:
-
-#     - name: Download build artifact
-#       uses: actions/download-artifact@v4
-#       with:
-#         name: build-files
-#         path: build/
-#         script: |
-#           echo "Build artifacts downloaded for deployment."
-#           ls -la build/  # List files to verify download
-
-#     - name: Copy files to EC2
-#       uses: appleboy/scp-action@v0.1.7
-#       with:
-#         host: ${{ secrets.EC2_HOST }}
-#         username: ${{ secrets.EC2_USER }}
-#         key: ${{ secrets.EC2_SSH_KEY }}
-#         source: "build/*"
-#         target: "/home/rocky/"
-
-#     - name: Deploy via SSH
-#       uses: appleboy/ssh-action@v1.0.3
-#       with:
-#         host: ${{ secrets.EC2_HOST }}
-#         username: ${{ secrets.EC2_USER }}
-#         key: ${{ secrets.EC2_SSH_KEY }}
-#         script: |
-#           sudo rm -rf /var/www/myportfolio/*
-#           sudo cp -r /home/rocky/build/* /var/www/myportfolio/
-#           sudo systemctl reload nginx
-#           echo "Deployment successful!"
-#           ls -la /var/www/myportfolio/  # List files to verify deployment
-
-# ========================
-
-name: CI-CD Pipeline
+name: CI-CD Docker Pipeline
 
 on:
   push:
@@ -90,35 +7,67 @@ on:
 jobs:
 
   # ========================
-  # CI JOB
+  # CI JOB (Build Docker Image)
   # ========================
   ci:
     runs-on: ubuntu-22.04
 
     steps:
+    # Checkout source code
     - name: Checkout code
       uses: actions/checkout@v4
 
+    # Setup Node (for building app before dockerizing)
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: 22
         cache: 'npm'
 
+    # Install dependencies
     - name: Install dependencies
       run: npm ci
 
-    - name: Build
+    # Build project (generates static files like /build)
+    - name: Build app
       run: npm run build
 
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v4
+    # Configure AWS credentials (use OIDC ideally)
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
       with:
-        name: build-files
-        path: build/
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
+
+    # Login to AWS ECR (Docker registry)
+    - name: Login to ECR
+      run: |
+        aws ecr get-login-password \
+        | docker login \
+        --username AWS \
+        --password-stdin ${{ secrets.ECR_REGISTRY }}
+
+    # Build Docker image
+    - name: Build Docker Image
+      run: |
+        docker build -t portfolio-app .
+
+    # Tag Docker image for ECR
+    - name: Tag Docker Image
+      run: |
+        docker tag portfolio-app:latest \
+        ${{ secrets.ECR_REGISTRY }}/portfolio-app:latest
+
+    # Push Docker image to ECR
+    - name: Push Docker Image
+      run: |
+        docker push \
+        ${{ secrets.ECR_REGISTRY }}/portfolio-app:latest
+
 
   # ========================
-  # CD JOB (SSM BASED)
+  # CD JOB (Deploy via SSM)
   # ========================
   cd:
     needs: ci
@@ -126,36 +75,37 @@ jobs:
 
     steps:
 
-    - name: Download build artifact
-      uses: actions/download-artifact@v4
-      with:
-       name: build-files
-       path: build/
-
+    # Configure AWS again for CD job
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-       aws-region: ap-south-1
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
 
-    - name: Upload build to S3
+    # Deploy container on EC2 using SSM
+    - name: Deploy Docker Container via SSM
       run: |
-           aws s3 sync build/ s3://my-portfolio-builds/
-
-    - name: Deploy via SSM
-      run: |
-       COMMAND_ID=$(aws ssm send-command \
+        COMMAND_ID=$(aws ssm send-command \
         --instance-ids "${{ secrets.INSTANCE_ID }}" \
         --document-name "AWS-RunShellScript" \
         --parameters 'commands=[
-          "echo Downloading latest build...",
-          "sudo rm -rf /var/www/myportfolio/*",
-          "aws s3 sync s3://my-portfolio-builds/ /var/www/myportfolio/",
-          "sudo systemctl reload nginx",
+          
+          "echo Pulling latest Docker image...",
+          "aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}",
+
+          "docker pull ${{ secrets.ECR_REGISTRY }}/portfolio-app:latest",
+
+          "echo Stopping old container (if exists)...",
+          "docker stop portfolio || true",
+          "docker rm portfolio || true",
+
+          "echo Running new container...",
+          "docker run -d -p 7070:80 --name portfolio ${{ secrets.ECR_REGISTRY }}/portfolio-app:latest",
+
           "echo Deployment successful!"
         ]' \
         --query "Command.CommandId" \
         --output text)
 
-       echo "Command ID: $COMMAND_ID"
+        echo "Command ID: $COMMAND_ID"
