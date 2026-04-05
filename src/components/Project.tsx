@@ -20,7 +20,7 @@ function Project() {
                 {/* <a href="" target="_blank" rel="noreferrer"><img src={mock10} className="zoom" alt="thumbnail" width="100%"/></a> */}
                 <img src={mock10} className="zoom" alt="thumbnail" width="100%"/>
                 {/* <a href="" target="_blank" rel="noreferrer"><h2>Filmate AI</h2></a> */}
-                <h2>Filmate AI hshcbbcsbkkkjkjaVJKKJDVKJ</h2>
+                <h2>Filmate AI</h2>
                 <p>Developed movie finder app with semantic search and sentiment analysis using OpenAI GPT-3.5 Turbo, Qdrant, React, and Flask.</p>
             </div>
             <div className="project">
