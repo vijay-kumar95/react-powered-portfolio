@@ -167,7 +167,7 @@ pipeline {
 
                 docker run -d -p 9669:80 --name portfolio \
                 $IMAGE_NAME:$IMAGE_TAG
-                
+
                 docker ps -a
                 docker logs portfolio
 
@@ -176,3 +176,4 @@ pipeline {
         }
 
     }
+}
