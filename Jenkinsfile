@@ -120,6 +120,11 @@ Deploys to EC2
 pipeline {
     agent any
 
+     environment {
+        IMAGE_NAME = "my-portfolio-app"
+        IMAGE_TAG  = "${BUILD_NUMBER}"
+    }
+
     stages {
 
         stage('Checkout') {
