@@ -120,10 +120,6 @@ Deploys to EC2
 pipeline {
     agent any
 
-        tools {
-        nodejs "node18"   // configure in Jenkins
-    }
-
     stages {
 
         stage('Checkout') {
