@@ -76,7 +76,7 @@ pipeline {
                 sh """
                 aws ssm send-command \
                 --document-name "AWS-RunShellScript" \
-                --targets "Key=tag:App,Values=portfolio" \
+                --targets "Key=tag:MyApp,Values=MyPortfolioWebApps" \
                 --region ${AWS_REGION} \
                 --parameters 'commands=[
                     "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com",
