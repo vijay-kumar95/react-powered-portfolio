@@ -19,6 +19,9 @@
 .env.production.local
 .env
 
+#github-actions yml file
+.github/*
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
