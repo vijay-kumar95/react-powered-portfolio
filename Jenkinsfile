@@ -79,7 +79,7 @@ pipeline {
                 --targets "Key=tag:App,Values=portfolio" \
                 --region ${AWS_REGION} \
                 --parameters 'commands=[
-                    "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}",
+                    "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com",
                     "docker pull ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG},
                     "docker stop my-app || true",
                     "docker rm my-app || true",
