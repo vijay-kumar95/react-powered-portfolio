@@ -120,23 +120,44 @@ Deploys to EC2
 pipeline {
     agent any
 
+        tools {
+        nodejs "node18"   // configure in Jenkins
+    }
+
     stages {
 
-        stage('Clone Code') {
+        stage('Checkout') {
             steps {
                 git branch: 'custom', url: 'https://github.com/vijay-kumar95/react-powered-portfolio.git'
             }
         }
 
-        stage('Build') {
+        stage('Install Dependencies') {
             steps {
-                echo "Building application..."
+                sh 'npm ci'
+            }
+        }
+
+        stage('Build Application') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                sh 'npm test || true'   // optional (avoid pipeline break initially)
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
                 sh '''
-                echo "Simulating build process"
-                ls -l
+                docker build -t $IMAGE_NAME:$IMAGE_TAG .
                 '''
             }
         }
 
+        }
+
     }
-}
