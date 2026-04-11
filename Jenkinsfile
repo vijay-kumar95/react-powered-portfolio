@@ -159,6 +159,20 @@ pipeline {
             }
         }
 
+        stage('Docker run') {
+            steps {
+                sh '''
+                docker stop portfolio || true
+                docker rm portfolio || true
+
+                docker run -d -p 9669:80 --name portfolio \
+                $IMAGE_NAME:$IMAGE_TAG
+                
+                docker ps -a
+                docker logs portfolio
+
+                '''
+            }
         }
 
     }
