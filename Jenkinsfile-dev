@@ -1,4 +1,5 @@
-pipeline {
+pipeline 
+{
     agent any
 
     environment {
@@ -30,7 +31,8 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') 
+        {
            steps {
                  withSonarQubeEnv('sonarqube-server') {
                   sh '''
@@ -39,10 +41,11 @@ pipeline {
                       -Dsonar.sources=src \
                       -Dsonar.host.url=$SONAR_HOST_URL \
                       -Dsonar.login=$SONAR_AUTH_TOKEN
-                    '''
-        }
-    }
-}
+                    '''}
+            }
+        }   
+    
+
         stage('Build Application') {
             steps {
                 sh 'npm run build'
@@ -59,26 +62,37 @@ pipeline {
             }
         }
 
-        stage('Publish to Nexus (npm)') {
+        stage('Push Docker Image to Nexus') 
+        {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'nexus-npm-cred',
-                    usernameVariable: 'USER',
-                    passwordVariable: 'PASS'
-                )]) {
+                  withCredentials([usernamePassword(
+                  credentialsId: 'nexus-npm-cred',   // ensure this is Nexus creds
+                  usernameVariable: 'USER',
+                  passwordVariable: 'PASS'
+                  )]) {
                     sh '''
-                    AUTH=$(echo -n "$USER:$PASS" | base64)
+                      set -e
 
-                    echo "registry=$NEXUS_REGISTRY" > ~/.npmrc
-                    echo "//13.203.105.212/repository/npm-hosted/:_auth=$AUTH" >> ~/.npmrc
-                    echo "always-auth=true" >> ~/.npmrc
+                          NEXUS_URL="13.233.39.162:80"
 
-                    npm publish
-                    '''
-                }
-                 // Push npm package to Nexus
+                          echo "Verifying local image exists..."
+                          docker images | grep "${IMAGE_NAME}" || { echo "Image not found"; exit 1; }
+
+                          echo "Tagging image for Nexus..."
+                          docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${NEXUS_URL}/${IMAGE_NAME}:${IMAGE_TAG}
+
+                          echo "Logging into Nexus..."
+                          echo "$PASS" | docker login ${NEXUS_URL} -u "$USER" --password-stdin
+
+                          echo "Pushing image..."
+                          docker push ${NEXUS_URL}/${IMAGE_NAME}:${IMAGE_TAG}
+                       '''
+                   }   
             }
         }
 
+
     }
+    
+
 }
