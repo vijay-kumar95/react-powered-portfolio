@@ -19,7 +19,7 @@ pipeline
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci'
+                sh 'npm ci --cache .npm --prefer-offline'
                 // Clean install for CI (faster + reproducible)
             }
         }
@@ -33,17 +33,34 @@ pipeline
 
         stage('SonarQube Analysis') 
         {
-           steps {
-                 withSonarQubeEnv('sonarqube-server') {
-                  sh '''
-                       npx sonar-scanner \
-                      -Dsonar.projectKey=portfolio-app \
-                      -Dsonar.sources=src \
-                      -Dsonar.host.url=$SONAR_HOST_URL \
-                      -Dsonar.login=$SONAR_AUTH_TOKEN
-                    '''}
+        //    steps {
+        //          withSonarQubeEnv('sonarqube-server') {
+        //           sh '''
+        //                npx sonar-scanner \
+        //               -Dsonar.projectKey=portfolio-app \
+        //               -Dsonar.sources=src \
+        //               -Dsonar.host.url=$SONAR_HOST_URL \
+        //               -Dsonar.login=$SONAR_AUTH_TOKEN \
+        //               -Dsonar.exclusions=node_modules/**,dist/**
+        //             '''}
+        //     }
+
+             steps {
+                   withSonarQubeEnv('sonarqube-server') {
+                    sh '''
+                     sonar-scanner \
+                    -Dsonar.projectKey=portfolio-app \
+                    -Dsonar.sources=src \
+                    -Dsonar.host.url=$SONAR_HOST_URL \
+                    -Dsonar.login=$SONAR_AUTH_TOKEN \
+                    -Dsonar.exclusions=node_modules/**,dist/** \
+                    -Dsonar.ws.timeout=30
+                '''
+                }
             }
-        }   
+        }
+
+
     
 
         stage('Build Application') {
@@ -73,7 +90,7 @@ pipeline
                     sh '''
                       set -e
 
-                          NEXUS_URL="13.233.39.162:80"
+                          NEXUS_URL="http://13.233.39.162:80"
 
                           echo "Verifying local image exists..."
                           docker images | grep "${IMAGE_NAME}" || { echo "Image not found"; exit 1; }
