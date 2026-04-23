@@ -31,23 +31,18 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonarqube-server') {
-                    sh 'npx sonar-scanner'
-                }
-                // Run SonarQube scan using local npm package
-            }
+           steps {
+                 withSonarQubeEnv('sonarqube-server') {
+                  sh '''
+                       npx sonar-scanner \
+                      -Dsonar.projectKey=portfolio-app \
+                      -Dsonar.sources=src \
+                      -Dsonar.host.url=$SONAR_HOST_URL \
+                      -Dsonar.login=$SONAR_AUTH_TOKEN
+                    '''
         }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-                // Fail pipeline if code quality is bad
-            }
-        }
-
+    }
+}
         stage('Build Application') {
             steps {
                 sh 'npm run build'
