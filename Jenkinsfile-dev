@@ -70,7 +70,7 @@ pipeline {
                     AUTH=$(echo -n "$USER:$PASS" | base64)
 
                     echo "registry=$NEXUS_REGISTRY" > ~/.npmrc
-                    echo "_auth=$AUTH" >> ~/.npmrc
+                    echo "//13.203.105.212/repository/npm-hosted/:_auth=$AUTH" >> ~/.npmrc
                     echo "always-auth=true" >> ~/.npmrc
 
                     npm publish
