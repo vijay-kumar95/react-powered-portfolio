@@ -2,42 +2,40 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "my-app"                         // Docker image name
-        IMAGE_TAG  = "${BUILD_NUMBER}"                // Unique tag per build
-        NEXUS_REGISTRY = "http://13.203.105.212/repository/npm-hosted/"  // Nexus npm repo
+        IMAGE_NAME = "my-app"                         
+        IMAGE_TAG  = "${BUILD_NUMBER}"                
+        NEXUS_REGISTRY = "http://13.203.105.212/repository/npm-hosted/"  
     }
-
 
     stages {
 
         stage('Checkout') {
             steps {
                 git branch: 'custom', url: 'https://github.com/vijay-kumar95/react-powered-portfolio.git'
-                // Pull latest code from repo
+                // Fetch code from GitHub
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 sh 'npm ci'
-                // Clean install (faster + reliable for CI)
+                // Clean install for CI (faster + reproducible)
             }
         }
 
         stage('Unit Tests') {
             steps {
                 sh 'npm test || true'
-                // Run tests → should fail pipeline if tests fail
-                // (use '|| true' only temporarily if tests are unstable)
+                // Run tests (temporary: do not fail pipeline)
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonarqube-server') {
-                    sh 'sonar-scanner'
+                    sh 'npx sonar-scanner'
                 }
-                // Static code analysis (bugs, vulnerabilities, smells)
+                // Run SonarQube scan using local npm package
             }
         }
 
@@ -46,14 +44,14 @@ pipeline {
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
-                // Stops pipeline if code quality is poor
+                // Fail pipeline if code quality is bad
             }
         }
 
         stage('Build Application') {
             steps {
                 sh 'npm run build'
-                // Build production-ready app
+                // Build production bundle
             }
         }
 
@@ -62,7 +60,7 @@ pipeline {
                 sh """
                 docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
                 """
-                // Create Docker image from app
+                // Create Docker image
             }
         }
 
@@ -83,7 +81,7 @@ pipeline {
                     npm publish
                     '''
                 }
-                // Upload npm package to Nexus (private registry)
+                // Push npm package to Nexus
             }
         }
 
