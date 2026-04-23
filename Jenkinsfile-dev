@@ -76,7 +76,7 @@ pipeline {
                     npm publish
                     '''
                 }
-                // Push npm package to Nexus
+                 // Push npm package to Nexus
             }
         }
 
