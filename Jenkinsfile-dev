@@ -7,9 +7,6 @@ pipeline {
         NEXUS_REGISTRY = "http://13.203.105.212/repository/npm-hosted/"  // Nexus npm repo
     }
 
-    tools {
-        sonarRunner 'sonar-scanner'   //// 🔴 THIS FIXES YOUR ERROR
-    }
 
     stages {
 
