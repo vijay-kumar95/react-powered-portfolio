@@ -4,7 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "my-app"                         
         IMAGE_TAG  = "${BUILD_NUMBER}"                
-        NEXUS_REGISTRY = "http://13.203.105.212/repository/npm-hosted/"  
+        NEXUS_REGISTRY = "http://13.203.105.212/repository/npm-group/"  
     }
 
     stages {
@@ -76,7 +76,7 @@ pipeline {
                     npm publish
                     '''
                 }
-                 // Push npm package to Nexus...
+                 // Push npm package to Nexus
             }
         }
 
