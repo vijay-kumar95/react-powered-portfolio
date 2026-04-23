@@ -19,7 +19,7 @@ pipeline
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci --cache .npm --prefer-offline'
+                sh 'npm ci'
                 // Clean install for CI (faster + reproducible)
             }
         }
