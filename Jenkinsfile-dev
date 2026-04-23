@@ -1,0 +1,90 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "my-app"                         // Docker image name
+        IMAGE_TAG  = "${BUILD_NUMBER}"                // Unique tag per build
+        NEXUS_REGISTRY = "http://13.203.105.212/repository/npm-hosted/"  // Nexus npm repo
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'custom', url: 'https://github.com/vijay-kumar95/react-powered-portfolio.git'
+                // Pull latest code from repo
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm ci'
+                // Clean install (faster + reliable for CI)
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                sh 'npm test'
+                // Run tests → should fail pipeline if tests fail
+                // (use '|| true' only temporarily if tests are unstable)
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube-server') {
+                    sh 'sonar-scanner'
+                }
+                // Static code analysis (bugs, vulnerabilities, smells)
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+                // Stops pipeline if code quality is poor
+            }
+        }
+
+        stage('Build Application') {
+            steps {
+                sh 'npm run build'
+                // Build production-ready app
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh """
+                docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                """
+                // Create Docker image from app
+            }
+        }
+
+        stage('Publish to Nexus (npm)') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'nexus-npm-creds',
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
+                    sh '''
+                    AUTH=$(echo -n "$USER:$PASS" | base64)
+
+                    echo "registry=$NEXUS_REGISTRY" > ~/.npmrc
+                    echo "_auth=$AUTH" >> ~/.npmrc
+                    echo "always-auth=true" >> ~/.npmrc
+
+                    npm publish
+                    '''
+                }
+                // Upload npm package to Nexus (private registry)
+            }
+        }
+
+    }
+}
