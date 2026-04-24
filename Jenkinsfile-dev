@@ -5,7 +5,6 @@ pipeline
     environment {
         IMAGE_NAME = "my-app"                         
         IMAGE_TAG  = "${BUILD_NUMBER}"                
-        NEXUS_REGISTRY = "http://13.203.105.212/repository/npm-group/"  
     }
 
     stages {
@@ -32,20 +31,8 @@ pipeline
         }
 
         stage('SonarQube Analysis') 
-        {
-        //    steps {
-        //          withSonarQubeEnv('sonarqube-server') {
-        //           sh '''
-        //                npx sonar-scanner \
-        //               -Dsonar.projectKey=portfolio-app \
-        //               -Dsonar.sources=src \
-        //               -Dsonar.host.url=$SONAR_HOST_URL \
-        //               -Dsonar.login=$SONAR_AUTH_TOKEN \
-        //               -Dsonar.exclusions=node_modules/**,dist/**
-        //             '''}
-        //     }
-
-             steps {
+         {
+              steps {
                    withSonarQubeEnv('sonarqube-server') {
                     sh '''
                      sonar-scanner \
@@ -60,8 +47,6 @@ pipeline
             }
         }
 
-
-    
 
         stage('Build Application') {
             steps {
@@ -79,34 +64,34 @@ pipeline
             }
         }
 
-        stage('Push Docker Image to Nexus') 
-        {
-            steps {
-                  withCredentials([usernamePassword(
-                  credentialsId: 'nexus-npm-cred',   // ensure this is Nexus creds
-                  usernameVariable: 'USER',
-                  passwordVariable: 'PASS'
-                  )]) {
-                    sh '''
-                      set -e
+        // stage('Push Docker Image to Nexus') 
+        // {
+        //     steps {
+        //           withCredentials([usernamePassword(
+        //           credentialsId: 'nexus-npm-cred',   // ensure this is Nexus creds
+        //           usernameVariable: 'USER',
+        //           passwordVariable: 'PASS'
+        //           )]) {
+        //             sh '''
+        //               set -e
 
-                          NEXUS_URL="http://13.233.39.162:80"
+        //                   NEXUS_URL="http://65.2.6.0/repository/docker-hosted/"
 
-                          echo "Verifying local image exists..."
-                          docker images | grep "${IMAGE_NAME}" || { echo "Image not found"; exit 1; }
+        //                   echo "Verifying local image exists..."
+        //                   docker images | grep "${IMAGE_NAME}" || { echo "Image not found"; exit 1; }
 
-                          echo "Tagging image for Nexus..."
-                          docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${NEXUS_URL}/${IMAGE_NAME}:${IMAGE_TAG}
+        //                   echo "Tagging image for Nexus..."
+        //                   docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${NEXUS_URL}/${IMAGE_NAME}:${IMAGE_TAG}
 
-                          echo "Logging into Nexus..."
-                          echo "$PASS" | docker login ${NEXUS_URL} -u "$USER" --password-stdin
+        //                   echo "Logging into Nexus..."
+        //                   echo "$PASS" | docker login ${NEXUS_URL} -u "$USER" --password-stdin
 
-                          echo "Pushing image..."
-                          docker push ${NEXUS_URL}/${IMAGE_NAME}:${IMAGE_TAG}
-                       '''
-                   }   
-            }
-        }
+        //                   echo "Pushing image..."
+        //                   docker push ${NEXUS_URL}/${IMAGE_NAME}:${IMAGE_TAG}
+        //                '''
+        //            }   
+        //     }
+        // }
 
 
     }
