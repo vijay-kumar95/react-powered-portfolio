@@ -92,6 +92,15 @@ pipeline
             }
         }
 
+        stage('Placeholder Deploy to Application Server') {
+            steps {
+                sh '''
+                echo "Deploying to application server..."
+                # Example: SSH into server and run deployment commands
+                '''
+            }
+        }
+
 
     }
     
