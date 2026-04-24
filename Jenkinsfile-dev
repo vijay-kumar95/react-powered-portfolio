@@ -18,10 +18,7 @@ pipeline
         
         stage('Install Dependencies') {
             steps {
-                sh '''
-                npm config set cache .npm-cache --global
-                npm ci --prefer-offline --no-audit --progress=false
-                '''
+                sh 'npm ci'
             }
         }
         
