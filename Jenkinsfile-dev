@@ -21,7 +21,7 @@ pipeline
         
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci'
+                sh 'npm ci --cache .npm-cache'
             }
         }
         
@@ -84,7 +84,7 @@ pipeline
                     sh '''
                       set -e
 
-                          NEXUS_URL="65.2.6.0:80"
+                          NEXUS_URL="3.111.38.13:80"
 
                           echo "Verifying local image exists..."
                           docker images | grep "${IMAGE_NAME}" || { echo "Image not found"; exit 1; }
