@@ -115,14 +115,14 @@ pipeline
                 --parameters commands="[
                     \\"set -x\\",
                     \\"IMAGE=${NEXUS_URL}/${IMAGE_NAME}:${IMAGE_TAG}\\",
-                    \\"echo Using image: $IMAGE\\",
-        
-                    \\"docker pull $IMAGE\\",
-        
+                    \\"echo Using image: \\$IMAGE\\",
+                
+                    \\"docker pull \\$IMAGE\\",
+                
                     \\"docker stop $CONTAINER_NAME || true\\",
                     \\"docker rm $CONTAINER_NAME || true\\",
-        
-                    \\"docker run -d --name $CONTAINER_NAME -p 80:80 $IMAGE\\"
+                
+                    \\"docker run -d --name $CONTAINER_NAME -p 80:80 \\$IMAGE\\"
                 ]" \
                 --output text
         
