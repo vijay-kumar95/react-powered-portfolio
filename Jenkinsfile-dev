@@ -4,7 +4,10 @@ pipeline
 
     environment {
         IMAGE_NAME = "my-app"                         
-        IMAGE_TAG  = "${BUILD_NUMBER}"                
+        IMAGE_TAG  = "${BUILD_NUMBER}" 
+        CONTAINER_NAME = 'app-container' 
+        AWS_REGION = 'ap-south-1' 
+        INSTANCE_ID = 'i-i-0dea03ce5a9e7fdb4'              
     }
 
     stages {
@@ -29,8 +32,7 @@ pipeline
             }
         }
 
-        stage('SonarQube Analysis') 
-         {
+        stage('SonarQube Analysis') {
               steps {
                    withSonarQubeEnv('sonarqube-server') {
                     sh '''
@@ -49,11 +51,11 @@ pipeline
         stage('Quality Gate') {
                 steps {
                       timeout(time: 2, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                    }
-               }
-     }
-
+                          waitForQualityGate abortPipeline: true 
+                       }
+                 }
+        }
+    
 
         stage('Build Application') {
             steps {
@@ -100,11 +102,30 @@ pipeline
             }
         }
 
-        stage('Placeholder Deploy to Application Server') {
+        stage('Deploy via SSM') {
             steps {
                 sh '''
-                echo "Deploying to application server..."
-                # Example: SSH into server and run deployment commands
+                echo "🚀 Deploy via SSM started"
+        
+                aws ssm send-command \
+                --region $AWS_REGION \
+                --instance-ids "$INSTANCE_ID" \
+                --document-name "AWS-RunShellScript" \
+                --parameters commands="[
+                    \\"set -x\\",
+                    \\"IMAGE=${NEXUS_URL}/${IMAGE_NAME}:${IMAGE_TAG}\\",
+                    \\"echo Using image: $IMAGE\\",
+        
+                    \\"docker pull $IMAGE\\",
+        
+                    \\"docker stop $CONTAINER_NAME || true\\",
+                    \\"docker rm $CONTAINER_NAME || true\\",
+        
+                    \\"docker run -d --name $CONTAINER_NAME -p 80:80 $IMAGE\\"
+                ]" \
+                --output text
+        
+                echo "✅ SSM command sent"
                 '''
             }
         }
@@ -112,5 +133,4 @@ pipeline
 
     }
     
-
 }
