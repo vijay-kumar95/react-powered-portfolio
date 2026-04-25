@@ -114,6 +114,7 @@ pipeline
                 --document-name "AWS-RunShellScript" \
                 --parameters commands="[
                     \\"set -x\\",
+                    \\"echo NEXUS_URL: ${NEXUS_URL}\\", 
                     \\"IMAGE=${NEXUS_URL}/${IMAGE_NAME}:${IMAGE_TAG}\\",
                     \\"echo Using image: \\$IMAGE\\",
                 
