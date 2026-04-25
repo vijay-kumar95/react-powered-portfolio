@@ -7,7 +7,8 @@ pipeline
         IMAGE_TAG  = "${BUILD_NUMBER}" 
         CONTAINER_NAME = 'app-container' 
         AWS_REGION = 'ap-south-1' 
-        INSTANCE_ID = 'i-0dea03ce5a9e7fdb4'              
+        INSTANCE_ID = 'i-0dea03ce5a9e7fdb4'  
+        NEXUS_URL="3.111.38.13:80"            
     }
 
     stages {
@@ -84,8 +85,6 @@ pipeline
                   )]) {
                     sh '''
                       set -e
-
-                          NEXUS_URL="3.111.38.13:80"
 
                           echo "Verifying local image exists..."
                           docker images | grep "${IMAGE_NAME}" || { echo "Image not found"; exit 1; }
