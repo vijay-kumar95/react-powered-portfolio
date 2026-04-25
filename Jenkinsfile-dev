@@ -104,30 +104,46 @@ pipeline
 
         stage('Deploy via SSM') {
             steps {
-                sh '''
-                echo "🚀 Deploy via SSM started"
+                withCredentials([usernamePassword(
+                    credentialsId: 'nexus-npm-cred',
+                    usernameVariable: 'NEXUS_USER',
+                    passwordVariable: 'NEXUS_PASS'
+                )]) {
+                    sh '''
+                    set -e
         
-                aws ssm send-command \
-                --region $AWS_REGION \
-                --instance-ids "$INSTANCE_ID" \
-                --document-name "AWS-RunShellScript" \
-                --parameters commands="[
-                    \\"set -x\\",
-                    \\"echo NEXUS_URL: ${NEXUS_URL}\\", 
-                    \\"IMAGE=${NEXUS_URL}/${IMAGE_NAME}:${IMAGE_TAG}\\",
-                    \\"echo Using image: \\$IMAGE\\",
-                
-                    \\"docker pull \\$IMAGE\\",
-                
-                    \\"docker stop $CONTAINER_NAME || true\\",
-                    \\"docker rm $CONTAINER_NAME || true\\",
-                
-                    \\"docker run -d --name $CONTAINER_NAME -p 80:80 \\$IMAGE\\"
-                ]" \
-                --output text
+                    IMAGE="${NEXUS_URL}/${IMAGE_NAME}:${IMAGE_TAG}"
         
-                echo "✅ SSM command sent!!!"
-                '''
+                    echo "🚀 Deploying IMAGE=$IMAGE to EC2 via SSM..."
+        
+                    aws ssm send-command \
+                      --region ${AWS_REGION} \
+                      --instance-ids "${INSTANCE_ID}" \
+                      --document-name "AWS-RunShellScript" \
+                      --comment "Deploying Docker image from Jenkins" \
+                      --parameters commands="[
+                        \\"set -x\\",
+        
+                        \\"echo Logging into Nexus...\\",
+                        \\"echo '${NEXUS_PASS}' | docker login ${NEXUS_URL} -u '${NEXUS_USER}' --password-stdin\\",
+        
+                        \\"echo Pulling image...\\",
+                        \\"docker pull ${IMAGE}\\",
+        
+                        \\"echo Stopping old container...\\",
+                        \\"docker stop ${CONTAINER_NAME} || true\\",
+        
+                        \\"echo Removing old container...\\",
+                        \\"docker rm ${CONTAINER_NAME} || true\\",
+        
+                        \\"echo Starting new container...\\",
+                        \\"docker run -d --name ${CONTAINER_NAME} -p 80:80 ${IMAGE}\\"
+                      ]" \
+                      --output text
+        
+                    echo "✅ SSM command sent"
+                    '''
+                }
             }
         }
 
