@@ -126,7 +126,7 @@ pipeline
                 ]" \
                 --output text
         
-                echo "✅ SSM command sent"
+                echo "✅ SSM command sent!!!"
                 '''
             }
         }
