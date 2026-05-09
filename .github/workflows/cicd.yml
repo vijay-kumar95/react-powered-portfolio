@@ -1,113 +1,76 @@
-name: CI-CD Docker Pipeline
+name: CICD Pipeline
 
 on:
   push:
-    branches: [ "custom" ]
+    branches:
+      - custom
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
 
   # ========================
-  # CI JOB (Build Docker Image)
+  # CI JOB
   # ========================
   ci:
     runs-on: ubuntu-22.04
 
     steps:
-    # Checkout source code
-    - name: Checkout code
-      uses: actions/checkout@v4
+      # Checkout source
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    # Setup Node (for building app before dockerizing)
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
-        cache: 'npm'
+      # Setup Node
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
 
-    # Install dependencies
-    - name: Install dependencies
-      run: npm ci
+      # Install dependencies
+      - name: Install dependencies
+        run: npm ci
 
-    # Build project (generates static files like /build)
-    - name: Build app
-      run: npm run build
+      # Build application
+      - name: Build app
+        run: npm run build
 
-#     # Configure AWS credentials (use OIDC ideally)
-#     - name: Configure AWS Credentials
-#       uses: aws-actions/configure-aws-credentials@v4
-#       with:
-#         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#         aws-region: ap-south-1
+      # Run tests
+      - name: Run tests
+        run: npm test -- --watchAll=false
 
-#     # Login to AWS ECR (Docker registry)
-#     - name: Login to ECR
-#       run: |
-#         aws ecr get-login-password \
-#         | docker login \
-#         --username AWS \
-#         --password-stdin ${{ secrets.ECR_REGISTRY }}
+      # Upload build artifacts
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build
+          path: build/
 
-#     # Build Docker image
-#     - name: Build Docker Image
-#       run: |
-#         docker build -t portfolio-app .
+  # ========================
+  # CD JOB
+  # ========================
+  cd:
+    needs: ci
+    runs-on: ubuntu-22.04
 
-#     # Tag Docker image for ECR
-#     - name: Tag Docker Image
-#       run: |
-#         docker tag portfolio-app:latest \
-#         ${{ secrets.ECR_REGISTRY }}/portfolio-app:latest
+    steps:
+      # Download artifacts
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: react-build
+          path: build/
 
-#     # Push Docker image to ECR
-#     - name: Push Docker Image
-#       run: |
-#         docker push \
-#         ${{ secrets.ECR_REGISTRY }}/portfolio-app:latest
+      # Configure AWS credentials using OIDC
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-
-#   # ========================
-#   # CD JOB (Deploy via SSM)
-#   # ========================
-#   cd:
-#     needs: ci
-#     runs-on: ubuntu-22.04
-
-#     steps:
-
-#     # Configure AWS again for CD job
-#     - name: Configure AWS Credentials
-#       uses: aws-actions/configure-aws-credentials@v4
-#       with:
-#         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#         aws-region: ap-south-1
-
-    # # Deploy container on EC2 using SSM
-    # - name: Deploy Docker Container via SSM
-    #   run: |
-    #     COMMAND_ID=$(aws ssm send-command \
-    #     --instance-ids "${{ secrets.INSTANCE_ID }}" \
-    #     --document-name "AWS-RunShellScript" \
-    #     --parameters 'commands=[
-          
-    #       "echo Pulling latest Docker image...",
-    #       "aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}",
-
-    #       "docker pull ${{ secrets.ECR_REGISTRY }}/portfolio-app:latest",
-
-    #       "echo Stopping old container if exists...",
-    #       "docker stop portfolio || true",
-    #       "docker rm portfolio || true",
-
-    #       "echo Running new container...",
-    #       "docker run -d -p 7070:80 --name portfolio ${{ secrets.ECR_REGISTRY }}/portfolio-app:latest",
-    #       "docker ps -a",
-    #       "docker logs portfolio",
-
-    #       "echo Deployment successful!"
-    #     ]' \
-    #     --query "Command.CommandId" \
-    #     --output text)
-
-    #     echo "Command ID: $COMMAND_ID"
+      # Deploy to S3
+      - name: Deploy to S3
+        run: |
+          aws s3 sync build/ s3://${{ secrets.S3_BUCKET }} --delete
