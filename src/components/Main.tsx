@@ -19,7 +19,7 @@ function Main() {
             <a href="" target="_blank" rel="noreferrer"><LinkedInIcon/></a>
           </div> */}
           <h1>Vijay Kumar</h1>
-          <p>Cloud & DevOps Engineer | SRE | Platform Engineering</p>
+          <p>AWS Cloud | DevOps | SRE | Platform Engineering</p>
 
           <div className="mobile_social_icons">
             <a href="https://github.com/vijay-kumar95" target="_blank" rel="noreferrer"><GitHubIcon/></a>

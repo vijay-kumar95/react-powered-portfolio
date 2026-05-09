@@ -3,7 +3,7 @@ name: CICD Pipeline
 on:
   push:
     branches:
-      - custom
+      - main
 
 permissions:
   id-token: write
