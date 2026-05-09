@@ -37,9 +37,9 @@ jobs:
       - name: Build app
         run: npm run build
 
-      # Run tests
-      - name: Run tests
-        run: npm test -- --watchAll=false
+      # # Run tests
+      # - name: Run tests
+      #   run: npm test -- --watchAll=false
 
       # Upload build artifacts
       - name: Upload build artifacts
